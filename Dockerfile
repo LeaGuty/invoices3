@@ -19,7 +19,6 @@ COPY src ./src
 # Compilamos y empaquetamos la aplicación, omitiendo las pruebas
 RUN mvn clean package -DskipTests
 
-
 # =========================================================================
 # === Etapa 2: Ejecución (Final Stage) ===
 # Partimos de una imagen base de Java 21 muy ligera (solo JRE, no el JDK completo).
