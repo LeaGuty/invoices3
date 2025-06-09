@@ -59,7 +59,7 @@ jobs:
             # Descargar la última versión de la imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
             # Parar y eliminar cualquier contenedor previo
-            docker stop /invoide || true && docker rm /invoide || true
+            docker stop invoide || true && docker rm invoide || true
             # Iniciar el contenedor
-            docker run -d --name /invoide -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+            docker run -d --name invoide -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
           EOF
