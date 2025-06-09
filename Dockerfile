@@ -1,45 +1,39 @@
 # =========================================================================
 # === Etapa 1: Construcción (Build Stage) ===
-# Usamos una imagen de Maven con Java 21 para compilar nuestro proyecto.
-# Esta etapa solo existe para crear el archivo .jar y no estará en la imagen final.
+# Usamos una imagen oficial de Maven con Java 21 sobre Alpine Linux.
+# Esta imagen ya tiene Maven instalado, por lo que no necesitamos instalarlo.
 # =========================================================================
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
-
-RUN apt-get update && apt-get install -y maven
 
 # Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
 # Copiamos primero el pom.xml para aprovechar el cache de Docker.
-# Si las dependencias no cambian, Docker no las descargará de nuevo.
 COPY pom.xml .
+# Optimizacion: Descargamos las dependencias para acelerar futuras construcciones
 RUN mvn dependency:go-offline
 
 # Copiamos el resto del código fuente del proyecto
 COPY src ./src
 
-# Ejecutamos el comando de Maven para compilar y empaquetar la aplicación en un .jar
-# -DskipTests omite la ejecución de las pruebas para acelerar la construcción.
+# Compilamos y empaquetamos la aplicación, omitiendo las pruebas
 RUN mvn clean package -DskipTests
 
 
 # =========================================================================
 # === Etapa 2: Ejecución (Final Stage) ===
-# Partimos de una imagen base de Java 21 muy ligera, solo con lo necesario
-# para ejecutar la aplicación, no para compilarla.
+# Partimos de una imagen base de Java 21 muy ligera (solo JRE, no el JDK completo).
 # =========================================================================
 FROM eclipse-temurin:21-jre-alpine
 
 # Establecemos el directorio de trabajo
-WORKDIR /app/efs
+WORKDIR /app
 
-# Copiamos únicamente el archivo .jar que se generó en la etapa anterior
-# desde la carpeta 'target' de la etapa 'build'.
+# Copiamos únicamente el archivo .jar que se generó en la etapa anterior.
 COPY --from=build /app/target/*.jar app.jar
 
-# Exponemos el puerto 8080, que es el que usa nuestra aplicación Spring Boot
+# Exponemos el puerto 8080
 EXPOSE 8080
 
-# Este es el comando que se ejecutará cuando el contenedor se inicie.
-# Simplemente inicia nuestra aplicación.
+# Comando para ejecutar la aplicación cuando el contenedor se inicie.
 ENTRYPOINT ["java", "-jar", "app.jar"]
