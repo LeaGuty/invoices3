@@ -11,7 +11,7 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build-and-deploy: # El nombre del job
     runs-on: ubuntu-latest
     steps:
       # Paso 1: Descarga el código de tu repositorio
@@ -26,7 +26,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Paso 3: Construye la imagen Docker usando tu Dockerfile
-      # Se etiqueta la imagen con tu usuario de Docker Hub y el nombre 'invoide'
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest .
@@ -37,7 +36,6 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
 
       # Paso 5: Prepara la clave SSH para conectar a la instancia EC2
-      # Crea el archivo de la clave privada a partir de un secreto de GitHub
       - name: Add SSH Key
         run: |
           mkdir -p ~/.ssh
@@ -51,20 +49,19 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
             # Dentro de la instancia EC2:
 
-            # 1. Inicia sesión en Docker Hub para poder descargar imágenes privadas
+            # 1. Inicia sesión en Docker Hub
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
             
-            # 2. Descarga la última versión de la imagen de tu aplicación
+            # 2. Descarga la última versión de la imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
             
             # 3. Detiene y elimina el contenedor antiguo si existe
-            # CORRECCIÓN: Se quitó la barra inicial de 'invoide-app'
+            # CORRECCIÓN: Se usa un nombre de contenedor válido: 'invoide-app'
             docker stop invoide-app || true
             docker rm invoide-app || true
             
             # 4. Inicia el nuevo contenedor con la imagen actualizada
-            # CORRECCIÓN: Se usó un nombre válido para el contenedor ('invoide-app')
-            # y se corrigió la doble barra en la imagen.
+            # CORRECCIÓN: Se usa un nombre válido y se añade el volumen EFS
             docker run -d --name invoide-app \
               -p 8080:8080 \
               -v /mnt/efs/invoices:/app/storage/invoices \
