@@ -54,12 +54,14 @@ jobs:
       - name: SSH commands to deploy
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Autenticar en DockerHub desde EC2
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-            # Descargar la última versión de la imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
-            # Parar y eliminar cualquier contenedor previo
             docker stop invoide || true && docker rm invoide || true
-            # Iniciar el contenedor
             docker run -d --name invoide -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+      
+            echo "🔍 Verificando contenedor..."
+            docker ps -f name=invoide
+      
+            echo "📦 Últimos logs del contenedor:"
+            docker logs --tail 20 invoide
           EOF
