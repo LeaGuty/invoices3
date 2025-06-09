@@ -1,5 +1,7 @@
-name: Build and Push Docker Image
+# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
+name: Build and Deploy Invoide App
 
+# Se dispara con cada push o pull request a la rama main
 on:
   push:
     branches:
@@ -9,57 +11,63 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Paso 1: Checkout del repositorio
+      # Paso 1: Descarga el código de tu repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Paso 2: Autenticar en DockerHub
+      # Paso 2: Inicia sesión en Docker Hub con tus secretos
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Paso 3: Construir la imagen de Docker
+      # Paso 3: Construye la imagen Docker usando tu Dockerfile
+      # Se etiqueta la imagen con tu usuario de Docker Hub y el nombre 'invoide'
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest .
 
-      # Paso 4: Hacer push de la imagen a DockerHub
+      # Paso 4: Sube la imagen construida a Docker Hub
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
 
-     # Paso 5: Configurar credenciales de AWS para SSH, incluyendo AWS_SESSION_TOKEN
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  # Cambia a tu región
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Añadido aquí
-
-      # Paso 5.5:
+      # Paso 5: Prepara la clave SSH para conectar a la instancia EC2
+      # Crea el archivo de la clave privada a partir de un secreto de GitHub
       - name: Add SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # Paso 6: Conectarse a EC2 y desplegar el contenedor
-      - name: SSH commands to deploy
+      # Paso 6: Se conecta a EC2 por SSH y ejecuta los comandos de despliegue
+      - name: SSH and Deploy
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Autenticar en DockerHub desde EC2
+          # El comando ssh se conecta usando la clave y los secretos de host/usuario
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Dentro de la instancia EC2:
+
+            # 1. Inicia sesión en Docker Hub para poder descargar imágenes privadas
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-            # Descargar la última versión de la imagen
+            
+            # 2. Descarga la última versión de la imagen de tu aplicación
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
-            # Parar y eliminar cualquier contenedor previo
-            docker stop /invoide || true && docker rm /invoide || true
-            # Iniciar el contenedor
-            docker run -d --name /invoide -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+            
+            # 3. Detiene y elimina el contenedor antiguo si existe
+            # CORRECCIÓN: Se quitó la barra inicial de 'invoide-app'
+            docker stop invoide-app || true
+            docker rm invoide-app || true
+            
+            # 4. Inicia el nuevo contenedor con la imagen actualizada
+            # CORRECCIÓN: Se usó un nombre válido para el contenedor ('invoide-app')
+            # y se corrigió la doble barra en la imagen.
+            docker run -d --name invoide-app \
+              -p 8080:8080 \
+              -v /mnt/efs/invoices:/app/storage/invoices \
+              --restart always \
+              ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
           EOF
