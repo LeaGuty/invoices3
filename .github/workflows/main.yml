@@ -1,7 +1,5 @@
-# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
-name: Build and Deploy Invoide App
+name: Build and Push Docker Image
 
-# Se dispara con cada push o pull request a la rama main
 on:
   push:
     branches:
@@ -11,60 +9,57 @@ on:
       - main
 
 jobs:
-  build-and-deploy: # El nombre del job
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      # Paso 1: Descarga el código de tu repositorio
+      # Paso 1: Checkout del repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Paso 2: Inicia sesión en Docker Hub con tus secretos
+      # Paso 2: Autenticar en DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Paso 3: Construye la imagen Docker usando tu Dockerfile
+      # Paso 3: Construir la imagen de Docker
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest .
 
-      # Paso 4: Sube la imagen construida a Docker Hub
+      # Paso 4: Hacer push de la imagen a DockerHub
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
 
-      # Paso 5: Prepara la clave SSH para conectar a la instancia EC2
+     # Paso 5: Configurar credenciales de AWS para SSH, incluyendo AWS_SESSION_TOKEN
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Cambia a tu región
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Añadido aquí
+
+      # Paso 5.5:
       - name: Add SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # Paso 6: Se conecta a EC2 por SSH y ejecuta los comandos de despliegue
-      - name: SSH and Deploy
+      # Paso 6: Conectarse a EC2 y desplegar el contenedor
+      - name: SSH commands to deploy
         run: |
-          # El comando ssh se conecta usando la clave y los secretos de host/usuario
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Dentro de la instancia EC2:
-
-            # 1. Inicia sesión en Docker Hub
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Autenticar en DockerHub desde EC2
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-            
-            # 2. Descarga la última versión de la imagen
+            # Descargar la última versión de la imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
-            
-            # 3. Detiene y elimina el contenedor antiguo si existe
-            # CORRECCIÓN: Se usa un nombre de contenedor válido: 'invoide-app'
-            docker stop invoide-app || true
-            docker rm invoide-app || true
-            
-            # 4. Inicia el nuevo contenedor con la imagen actualizada
-            # CORRECCIÓN: Se usa un nombre válido y se añade el volumen EFS
-            docker run -d --name invoide-app \
-              -p 8080:8080 \
-              -v /mnt/efs/invoices:/app/storage/invoices \
-              --restart always \
-              ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+            # Parar y eliminar cualquier contenedor previo
+            docker stop /invoide || true && docker rm /invoide || true
+            # Iniciar el contenedor
+            docker run -d --name /invoide -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
           EOF
