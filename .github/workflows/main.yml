@@ -63,7 +63,7 @@ jobs:
               --restart always \
               ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
       
-            echo "🔍 Verificando contenedor..."
+            echo "🔍 Verificando contenedor.. ."
             docker ps -f name=invoide
       
             echo "📦 Últimos logs del contenedor:"
