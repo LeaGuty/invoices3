@@ -59,7 +59,7 @@ jobs:
             docker stop invoide || true && docker rm invoide || true
             docker run -d --name invoide \
               -p 8080:8080 \
-              -v /mnt/efs:/app/storage/invoices \
+              -v /mnt/efs/invoices:/app/storage/invoices \
               --restart always \
               ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
       
