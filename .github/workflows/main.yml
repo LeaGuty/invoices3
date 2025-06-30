@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Paso 2: Autenticar en DockerHub
+      # Paso 2: Autenticar en DockerHub 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
