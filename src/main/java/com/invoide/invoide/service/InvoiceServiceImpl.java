@@ -13,6 +13,12 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,15 +70,24 @@ public class InvoiceServiceImpl implements IInvoiceService {
 
         Path efsPath = Paths.get(efsMountPath, savedInvoice.getId() + ".pdf");
         Files.createDirectories(efsPath.getParent());
-        Files.write(efsPath, content.getBytes());
+
+        // --- INICIO DE LA MODIFICACIÓN CON ITEXT ---
+        PdfWriter writer = new PdfWriter(new FileOutputStream(efsPath.toFile()));
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        // Añade el contenido al PDF
+        document.add(new Paragraph(content));
+
+        document.close();
+        // --- FIN DE LA MODIFICACIÓN CON ITEXT ---
 
         savedInvoice.setLocalEfsPath(efsPath.toString());
         savedInvoice.setUploadedToS3(false);
 
         Invoice finalInvoice = invoiceRepository.save(savedInvoice);
 
-        // MODIFICADO: Enviar mensaje al intercambio principal con la routing key vacía, según la configuración del binding
-        rabbitTemplate.convertAndSend(this.mainExchangeName, "", finalInvoice.getId()); // MODIFICADO
+        rabbitTemplate.convertAndSend(this.mainExchangeName, "", finalInvoice.getId());
 
         return finalInvoice;
     }
