@@ -163,10 +163,50 @@ public class InvoiceServiceImpl implements IInvoiceService {
     @Override
     @Transactional
     public Invoice updateInvoice(String invoiceId, String newCustomerId) {
-        Invoice invoice = findInvoiceById(invoiceId);
-        if (newCustomerId != null && !newCustomerId.isEmpty()) {
-            invoice.setCustomerId(newCustomerId);
+        // 1. Validar que el nuevo ID de cliente no sea nulo o vacío
+        if (newCustomerId == null || newCustomerId.isEmpty()) {
+            throw new IllegalArgumentException("El nuevo ID de cliente no puede ser nulo o vacío.");
         }
+
+        // 2. Encontrar la factura existente
+        Invoice invoice = findInvoiceById(invoiceId);
+        String oldCustomerId = invoice.getCustomerId();
+
+        // 3. Si el ID del cliente no ha cambiado, no hacer nada
+        if (newCustomerId.equals(oldCustomerId)) {
+            return invoice;
+        }
+
+        // 4. Si la factura ya fue subida a S3, mover el archivo
+        if (invoice.isUploadedToS3()) {
+            // 4.1. Construir la nueva clave S3 con el nuevo ID de cliente
+            String newS3Key = String.format("%s/%s/%s",
+                    newCustomerId,
+                    invoice.getCreationDate().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                    invoice.getId() + ".pdf");
+
+            // 4.2. Copiar el objeto a la nueva ubicación
+            CopyObjectRequest copyReq = CopyObjectRequest.builder()
+                    .sourceBucket(bucketName)
+                    .sourceKey(invoice.getS3Key())
+                    .destinationBucket(bucketName)
+                    .destinationKey(newS3Key)
+                    .build();
+            s3Client.copyObject(copyReq);
+
+            // 4.3. Eliminar el objeto de la ubicación antigua
+            DeleteObjectRequest deleteReq = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(invoice.getS3Key())
+                    .build();
+            s3Client.deleteObject(deleteReq);
+
+            // 4.4. Actualizar la clave S3 en el objeto de la factura
+            invoice.setS3Key(newS3Key);
+        }
+
+        // 5. Actualizar el ID del cliente y guardar los cambios en la base de datos
+        invoice.setCustomerId(newCustomerId);
         return invoiceRepository.save(invoice);
     }
 }
