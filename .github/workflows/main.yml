@@ -17,6 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # AÑADIDO: Reconstruye el Wallet de Oracle desde el secreto
+      - name: Decode Oracle Wallet
+        run: |
+          # Crea un archivo temporal con el contenido del secreto
+          echo "${{ secrets.ORACLE_WALLET_BASE64 }}" > wallet_base64.txt
+          # Decodifica el base64 para obtener el archivo .zip
+          base64 -d wallet_base64.txt > Wallet_DUOCBBDD.zip
+          # Descomprime el archivo para recrear la carpeta
+          unzip Wallet_DUOCBBDD.zip
+          # La carpeta "Wallet_DUOCBBDD" ahora existe y está lista para el build
+          
+
+
       # Paso 2: Autenticar en DockerHub 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
