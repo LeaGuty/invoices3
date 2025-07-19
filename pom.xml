@@ -14,7 +14,7 @@
     <artifactId>invoide</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>invoide</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Demo project for Spring Boot</description> 
     <url/>
     <licenses>
         <license/>
@@ -87,10 +87,28 @@
         </dependency>
 
         <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc11-production</artifactId>
-            <version>23.4.0.24.05</version> <type>pom</type>
-        </dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc11</artifactId>
+			<scope>runtime</scope>
+		</dependency>	
+        <dependency>
+        	<groupId>com.oracle.database.security</groupId>
+        	<artifactId>oraclepki</artifactId>
+        	<version>21.5.0.0</version>
+        	<scope>runtime</scope>
+    	</dependency>
+    	<dependency>
+        	<groupId>com.oracle.database.security</groupId>
+        	<artifactId>osdt_cert</artifactId>
+        	<version>21.5.0.0</version>
+        	<scope>runtime</scope>
+    	</dependency>
+    	<dependency>
+        	<groupId>com.oracle.database.security</groupId>
+        	<artifactId>osdt_core</artifactId>
+        	<version>21.5.0.0</version>
+        	<scope>runtime</scope>
+    	</dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
