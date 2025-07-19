@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # AÑADIDO: Reconstruye el Wallet de Oracle desde el secreto 
+      # AÑADIDO: Reconstruye el Wallet de Oracle desde el secreto
       - name: Decode Oracle Wallet
         run: |
           # Crea un archivo temporal con el contenido del secreto
