@@ -28,8 +28,6 @@ jobs:
           unzip Wallet_DUOCBBDD.zip
           # La carpeta "Wallet_DUOCBBDD" ahora existe y está lista para el build
           
-
-
       # Paso 2: Autenticar en DockerHub 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
