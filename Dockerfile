@@ -28,6 +28,9 @@ FROM eclipse-temurin:21-jre-alpine
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
+# AÑADIDO: Copia la carpeta del Wallet (que ahora existe en el contexto del build)
+COPY Wallet_DUOCBBDD /app/wallet
+
 # Copiamos únicamente el archivo .jar que se generó en la etapa anterior.
 COPY --from=build /app/target/*.jar app.jar
 
