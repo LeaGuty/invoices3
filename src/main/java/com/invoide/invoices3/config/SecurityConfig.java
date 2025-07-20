@@ -1,4 +1,4 @@
-package com.invoide.invoide.config;
+package com.invoide.invoices3.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.invoide.invoide.config;
+package com.invoide.invoices3.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;

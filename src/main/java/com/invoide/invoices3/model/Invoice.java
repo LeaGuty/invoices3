@@ -1,4 +1,4 @@
-package com.invoide.invoide.model;
+package com.invoide.invoices3.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -1,8 +1,9 @@
-package com.invoide.invoide.repository;
+package com.invoide.invoices3.repository;
 
-import com.invoide.invoide.model.Invoice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.invoide.invoices3.model.Invoice;
 
 import java.util.List;
 

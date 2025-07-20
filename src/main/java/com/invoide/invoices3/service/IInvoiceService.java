@@ -1,9 +1,10 @@
-package com.invoide.invoide.service;
+package com.invoide.invoices3.service;
 
 
-import com.invoide.invoide.model.Invoice;
 import java.io.IOException;
 import java.util.List;
+
+import com.invoide.invoices3.model.Invoice;
 
 public interface IInvoiceService {
     

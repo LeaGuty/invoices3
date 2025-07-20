@@ -1,12 +1,13 @@
-package com.invoide.invoide.controller;
+package com.invoide.invoices3.controller;
 
-import com.invoide.invoide.model.Invoice;
-import com.invoide.invoide.service.IInvoiceService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.invoide.invoices3.model.Invoice;
+import com.invoide.invoices3.service.IInvoiceService;
 
 import java.io.IOException;
 import java.util.List;

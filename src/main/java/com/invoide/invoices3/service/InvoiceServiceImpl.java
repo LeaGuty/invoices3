@@ -1,7 +1,5 @@
-package com.invoide.invoide.service;
+package com.invoide.invoices3.service;
 
-import com.invoide.invoide.model.Invoice;
-import com.invoide.invoide.repository.InvoiceRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -13,6 +11,9 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import com.invoide.invoices3.config.RabbitMQConfig;
+import com.invoide.invoices3.model.Invoice;
+import com.invoide.invoices3.repository.InvoiceRepository;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -26,8 +27,6 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import com.invoide.invoide.config.RabbitMQConfig; // AÑADIDO: Importar la clase de configuración de RabbitMQ
 
 /**
  * Implementación de la lógica de negocio para la gestión de facturas.
