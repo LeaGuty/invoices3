@@ -27,6 +27,10 @@ public class Invoice {
      * Identificador del cliente al que pertenece la factura.
      */
     private String customerId;
+    /**
+     * Contenido de la factura.
+     */
+    private String content;
 
     /**
      * Fecha de creación de la factura.
