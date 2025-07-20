@@ -64,6 +64,7 @@ public class InvoiceServiceImpl implements IInvoiceService {
         Invoice invoice = new Invoice();
         invoice.setCustomerId(customerId);
         invoice.setCreationDate(LocalDate.now());
+        invoice.setContent(content);
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
@@ -102,6 +103,20 @@ public class InvoiceServiceImpl implements IInvoiceService {
         }
 
         Invoice invoice = findInvoiceById(invoiceId);
+
+        Path efsPath = Paths.get(efsMountPath, invoice.getId() + ".pdf");
+        Files.createDirectories(efsPath.getParent());
+
+        // --- INICIO DE LA MODIFICACIÓN CON ITEXT ---
+        PdfWriter writer = new PdfWriter(new FileOutputStream(efsPath.toFile()));
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        // Añade el contenido al PDF
+        document.add(new Paragraph(invoice.getContent()));
+
+        document.close();
+        // --- FIN DE LA MODIFICACIÓN CON ITEXT ---
 
         // Verificación para evitar la subida duplicada a S3 si ya fue subida
         if (invoice.isUploadedToS3()) {
