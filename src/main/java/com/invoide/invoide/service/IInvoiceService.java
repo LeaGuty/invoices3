@@ -9,7 +9,7 @@ public interface IInvoiceService {
     
     Invoice createInvoice(String customerId, String content) throws IOException;
     
-    Invoice uploadInvoiceToS3(String invoiceId) throws IOException;
+    void uploadInvoiceToS3(String invoiceId) throws IOException;
     
     byte[] downloadInvoice(String invoiceId);
     
