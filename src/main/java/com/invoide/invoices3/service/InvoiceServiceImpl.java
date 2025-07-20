@@ -57,7 +57,7 @@ public class InvoiceServiceImpl implements IInvoiceService {
         this.invoiceUploadQueueName = RabbitMQConfig.MAIN_QUEUE;
         this.mainExchangeName = RabbitMQConfig.MAIN_EXCHANGE; // AÑADIDO
     }
-
+/* 
     @Override
     @Transactional
     public Invoice createInvoice(String customerId, String content) throws IOException {
@@ -91,7 +91,7 @@ public class InvoiceServiceImpl implements IInvoiceService {
 
         return finalInvoice;
     }
-
+*/
     @Override
     @Transactional
     @RabbitListener(queues = RabbitMQConfig.MAIN_QUEUE) // MODIFICADO: Apuntar directamente a la constante de la cola principal
@@ -140,7 +140,7 @@ public class InvoiceServiceImpl implements IInvoiceService {
         System.out.println("Factura " + invoiceId + " subida a S3 correctamente.");
         
     }
-
+/* 
     @Override
     public byte[] downloadInvoice(String invoiceId) {
         Invoice invoice = findInvoiceById(invoiceId);
@@ -167,13 +167,13 @@ public class InvoiceServiceImpl implements IInvoiceService {
     public List<Invoice> getCustomerInvoiceHistory(String customerId) {
         return invoiceRepository.findByCustomerId(customerId);
     }
-
+*/
     @Override
     public Invoice findInvoiceById(String invoiceId) {
         return invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada con ID: " + invoiceId));
     }
-
+/*
     @Override
     @Transactional
     public Invoice updateInvoice(String invoiceId, String newCustomerId) {
@@ -222,5 +222,5 @@ public class InvoiceServiceImpl implements IInvoiceService {
         // 5. Actualizar el ID del cliente y guardar los cambios en la base de datos
         invoice.setCustomerId(newCustomerId);
         return invoiceRepository.save(invoice);
-    }
+    }*/
 }
