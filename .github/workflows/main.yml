@@ -67,7 +67,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoices3:latest
-            docker stop invoide || true && docker rm invoices3 || true
+            docker stop invoices3 || true && docker rm invoices3 || true
             docker run -d --name invoices3 \
             -p 8081:8081 \
             -v /mnt/efs:/app/storage/invoices3 \
