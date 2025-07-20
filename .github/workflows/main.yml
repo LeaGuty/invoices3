@@ -38,12 +38,12 @@ jobs:
       # Paso 3: Construir la imagen de Docker
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/invoices3:latest .
 
       # Paso 4: Hacer push de la imagen a DockerHub 
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/invoices3:latest
 
      # Paso 5: Configurar credenciales de AWS para SSH, incluyendo AWS_SESSION_TOKEN
       - name: Set up AWS credentials
@@ -66,21 +66,21 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
-            docker stop invoide || true && docker rm invoide || true
-            docker run -d --name invoide \
-            -p 8080:8080 \
-            -v /mnt/efs:/app/storage/invoices \
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/invoices3:latest
+            docker stop invoide || true && docker rm invoices3 || true
+            docker run -d --name invoices3 \
+            -p 8081:8081 \
+            -v /mnt/efs:/app/storage/invoices3 \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} \
             -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             --restart always \
-            ${{ secrets.DOCKERHUB_USERNAME }}/invoide:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/invoices3:latest
       
             echo "🔍 Verificando contenedor... "
-            docker ps -f name=invoide
+            docker ps -f name=invoices3
       
             echo "📦 Últimos logs del contenedor:"
             docker logs --tail 20 invoide
