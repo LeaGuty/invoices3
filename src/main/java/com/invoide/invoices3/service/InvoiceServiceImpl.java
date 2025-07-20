@@ -57,41 +57,7 @@ public class InvoiceServiceImpl implements IInvoiceService {
         this.invoiceUploadQueueName = RabbitMQConfig.MAIN_QUEUE;
         this.mainExchangeName = RabbitMQConfig.MAIN_EXCHANGE; // AÑADIDO
     }
-/* 
-    @Override
-    @Transactional
-    public Invoice createInvoice(String customerId, String content) throws IOException {
-        Invoice invoice = new Invoice();
-        invoice.setCustomerId(customerId);
-        invoice.setCreationDate(LocalDate.now());
-        invoice.setContent(content);
 
-        Invoice savedInvoice = invoiceRepository.save(invoice);
-
-        Path efsPath = Paths.get(efsMountPath, savedInvoice.getId() + ".pdf");
-        Files.createDirectories(efsPath.getParent());
-
-        // --- INICIO DE LA MODIFICACIÓN CON ITEXT ---
-        PdfWriter writer = new PdfWriter(new FileOutputStream(efsPath.toFile()));
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-
-        // Añade el contenido al PDF
-        document.add(new Paragraph(content));
-
-        document.close();
-        // --- FIN DE LA MODIFICACIÓN CON ITEXT ---
-
-        savedInvoice.setLocalEfsPath(efsPath.toString());
-        savedInvoice.setUploadedToS3(false);
-
-        Invoice finalInvoice = invoiceRepository.save(savedInvoice);
-
-        rabbitTemplate.convertAndSend(this.mainExchangeName, "", finalInvoice.getId());
-
-        return finalInvoice;
-    }
-*/
     @Override
     @Transactional
     @RabbitListener(queues = RabbitMQConfig.MAIN_QUEUE) // MODIFICADO: Apuntar directamente a la constante de la cola principal
@@ -140,87 +106,11 @@ public class InvoiceServiceImpl implements IInvoiceService {
         System.out.println("Factura " + invoiceId + " subida a S3 correctamente.");
         
     }
-/* 
-    @Override
-    public byte[] downloadInvoice(String invoiceId) {
-        Invoice invoice = findInvoiceById(invoiceId);
-        if (!invoice.isUploadedToS3()) {
-            throw new IllegalStateException("La factura debe ser subida a S3 antes de poder descargarla.");
-        }
-        GetObjectRequest request = GetObjectRequest.builder().bucket(bucketName).key(invoice.getS3Key()).build();
-        ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(request);
-        return responseBytes.asByteArray();
-    }
 
-    @Override
-    @Transactional
-    public void deleteInvoice(String invoiceId) {
-        Invoice invoice = findInvoiceById(invoiceId);
-        if (invoice.isUploadedToS3()) {
-            DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(invoice.getS3Key()).build();
-            s3Client.deleteObject(request);
-        }
-        invoiceRepository.delete(invoice);
-    }
-
-    @Override
-    public List<Invoice> getCustomerInvoiceHistory(String customerId) {
-        return invoiceRepository.findByCustomerId(customerId);
-    }
-*/
     @Override
     public Invoice findInvoiceById(String invoiceId) {
         return invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada con ID: " + invoiceId));
     }
-/*
-    @Override
-    @Transactional
-    public Invoice updateInvoice(String invoiceId, String newCustomerId) {
-        // 1. Validar que el nuevo ID de cliente no sea nulo o vacío
-        if (newCustomerId == null || newCustomerId.isEmpty()) {
-            throw new IllegalArgumentException("El nuevo ID de cliente no puede ser nulo o vacío.");
-        }
 
-        // 2. Encontrar la factura existente
-        Invoice invoice = findInvoiceById(invoiceId);
-        String oldCustomerId = invoice.getCustomerId();
-
-        // 3. Si el ID del cliente no ha cambiado, no hacer nada
-        if (newCustomerId.equals(oldCustomerId)) {
-            return invoice;
-        }
-
-        // 4. Si la factura ya fue subida a S3, mover el archivo
-        if (invoice.isUploadedToS3()) {
-            // 4.1. Construir la nueva clave S3 con el nuevo ID de cliente
-            String newS3Key = String.format("%s/%s/%s",
-                    newCustomerId,
-                    invoice.getCreationDate().format(DateTimeFormatter.ofPattern("yyyy-MM")),
-                    invoice.getId() + ".pdf");
-
-            // 4.2. Copiar el objeto a la nueva ubicación
-            CopyObjectRequest copyReq = CopyObjectRequest.builder()
-                    .sourceBucket(bucketName)
-                    .sourceKey(invoice.getS3Key())
-                    .destinationBucket(bucketName)
-                    .destinationKey(newS3Key)
-                    .build();
-            s3Client.copyObject(copyReq);
-
-            // 4.3. Eliminar el objeto de la ubicación antigua
-            DeleteObjectRequest deleteReq = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(invoice.getS3Key())
-                    .build();
-            s3Client.deleteObject(deleteReq);
-
-            // 4.4. Actualizar la clave S3 en el objeto de la factura
-            invoice.setS3Key(newS3Key);
-        }
-
-        // 5. Actualizar el ID del cliente y guardar los cambios en la base de datos
-        invoice.setCustomerId(newCustomerId);
-        return invoiceRepository.save(invoice);
-    }*/
 }
