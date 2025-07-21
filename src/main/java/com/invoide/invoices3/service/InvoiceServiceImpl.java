@@ -63,12 +63,14 @@ public class InvoiceServiceImpl implements IInvoiceService {
     @RabbitListener(queues = RabbitMQConfig.MAIN_QUEUE) // MODIFICADO: Apuntar directamente a la constante de la cola principal
     public void uploadInvoiceToS3(String invoiceId) throws IOException {
         // Lógica para simular un error para pruebas de la Cola de Carta Muerta (DLQ)
-        Invoice invoice = findInvoiceById(invoiceId);
-        if (invoice.getCustomerId().startsWith("error-dlq")) {
+        
+        if (invoiceId.startsWith("test-dlq-")) {
             System.out.println("Simulando error para ID: " + invoiceId + ". Este mensaje irá a la DLQ.");
             throw new RuntimeException("Error simulado para pruebas de DLQ.");
         }
-        
+
+        Invoice invoice = findInvoiceById(invoiceId);
+
         Path efsPath = Paths.get(efsMountPath, invoice.getId() + ".pdf");
         Files.createDirectories(efsPath.getParent());
 
